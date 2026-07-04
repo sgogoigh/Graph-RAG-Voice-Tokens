@@ -53,7 +53,7 @@ The fixed per-turn instruction overhead becomes O(one node) instead of O(entire 
 | # | Decision | Rationale |
 |---|---|---|
 | D1 | **Language/stack: Python 3.11+**, `groq` SDK, SQLite, `networkx` (validation only), `matplotlib/plotly` | Fastest path; SQLite = zero-infra tabular DB |
-| D2 | **Agent model: `llama-3.3-70b-versatile`** on Groq — *identical* for Agent A and Agent B, temperature 0.3, same max_tokens | Same-model comparison isolates the architecture variable |
+| D2 | **Agent model: `meta-llama/llama-4-scout-17b-16e-instruct`** on Groq — *identical* for Agent A and Agent B, temperature 0.3, same max_tokens. *(Revised 2026-07-05: originally `llama-3.3-70b-versatile`, but free-tier limits rule it out — 70B is capped at 100k tokens/day and one Agent A conversation ≈ 28k; 8B-instant's 6k TPM can't even carry Agent A's ~6.3k-token request. Scout: 30k TPM / 500k TPD / 1k requests-day. The 1k RPD budgets the M7 matrix — plan 2 runs/scenario or a two-day split. Same-model comparison still isolates the architecture variable.)* | Same-model comparison isolates the architecture variable |
 | D3 | **Customer simulator model: `llama-3.1-8b-instant`** with fixed persona scripts | Cheap, fast, deterministic-ish adversary; identical scripts for both agents |
 | D4 | **Judge model: `openai/gpt-oss-120b`** (on Groq) — different family than the agents | Reduces same-family self-preference bias in Q-C scoring |
 | D5 | **Graph storage: versioned JSON in-repo** (`graph/graph.json`), traversed by a deterministic engine + one tiny LLM router call per turn | "Don't overcomplicate" — no vector DB / Neo4j needed; the graph is small enough for exact traversal. Router cost is honestly billed to B |

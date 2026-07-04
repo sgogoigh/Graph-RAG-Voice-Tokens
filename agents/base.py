@@ -24,6 +24,7 @@ class TurnMetrics:
     latency_ms: float = 0.0
     api_calls: list[CallRecord] = field(default_factory=list)
     tool_calls: list[dict] = field(default_factory=list)  # {name, arguments, result}
+    extra: dict = field(default_factory=dict)  # agent-specific (Agent B: node, router info)
 
     @property
     def prompt_tokens(self) -> int:

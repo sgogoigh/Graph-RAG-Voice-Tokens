@@ -74,18 +74,22 @@ def run_one(agent: AgentA, smoke_id: str, scenario: str, user_msgs: list[str]) -
 
 
 def main() -> None:
+    # Optional args: smoke ids to run (default: all), e.g.  smoke_agent_a.py smoke_v2_day31
+    only = set(sys.argv[1:])
+    smokes = [s for s in SMOKES if not only or s[0] in only]
+
     # Fresh DB so smoke writes (returns, tickets, cancellations) start from a known state.
     subprocess.run([sys.executable, str(config.ROOT / "db" / "seed.py")], check=True)
 
     agent = AgentA()
     grand = {"prompt": 0, "completion": 0}
-    for smoke_id, scenario, msgs in SMOKES:
+    for smoke_id, scenario, msgs in smokes:
         t = run_one(agent, smoke_id, scenario, msgs)
         grand["prompt"] += t["prompt"]
         grand["completion"] += t["completion"]
 
     print(f"\n{'=' * 78}")
-    print(f"Smoke complete: {len(SMOKES)} conversations, "
+    print(f"Smoke complete: {len(smokes)} conversations, "
           f"{grand['prompt']}p + {grand['completion']}c tokens total.")
     print(f"Transcripts in {config.TRANSCRIPTS_DIR / 'agent_a'}")
 

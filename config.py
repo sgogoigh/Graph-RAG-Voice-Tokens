@@ -31,7 +31,12 @@ GROQ_API_KEY = (os.getenv("GROQ_API_KEY") or "").strip()
 # ---------------------------------------------------------------------------
 # Models (PLAN.md §2 D2-D4) — all on Groq
 # ---------------------------------------------------------------------------
-AGENT_MODEL = "llama-3.3-70b-versatile"      # identical for Agent A and Agent B
+# NOTE: model choice is constrained by Groq FREE-TIER limits (console.groq.com/docs/rate-limits):
+#   llama-3.3-70b-versatile: 12k TPM / 100k TPD  -> one Agent A conversation ~28k, matrix infeasible
+#   llama-3.1-8b-instant:     6k TPM             -> Agent A's ~6.3k-token request can't even be sent
+#   llama-4-scout-17b:       30k TPM / 500k TPD / 1k RPD -> viable (RPD budgets the M7 matrix)
+# The comparison stays valid because BOTH agents use the same model. Revisit on Dev Tier.
+AGENT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"  # identical for Agent A and Agent B
 ROUTER_MODEL = "llama-3.1-8b-instant"        # Agent B's graph router (billed to B)
 CUSTOMER_MODEL = "llama-3.1-8b-instant"      # simulated customer
 JUDGE_MODEL = "openai/gpt-oss-120b"          # blind Q-C judge (different family)

@@ -1,0 +1,65 @@
+[
+  {
+    "section": "core rules & identity & tools",
+    "verdict": {
+      "parse_error": "{\n  \"missing_in_b\": [\n    \"Human support team hours are 9 am–6 pm ET Monday–Friday; outside those hours tickets become callback requests for the next business day.\",\n    \""
+    },
+    "judge_tokens": 3942
+  },
+  {
+    "section": "V1 Orders & Shipping",
+    "verdict": {
+      "parse_error": ""
+    },
+    "judge_tokens": 4145
+  },
+  {
+    "section": "V2 Returns & Refunds",
+    "verdict": {
+      "parse_error": ""
+    },
+    "judge_tokens": 4952
+  },
+  {
+    "section": "V3 Products & Sizing",
+    "verdict": {
+      "missing_in_b": [],
+      "missing_in_a": [
+        "When providing stock information, must report the stock exactly as returned by the search_products tool without alteration."
+      ]
+    },
+    "judge_tokens": 3266
+  },
+  {
+    "section": "V4 Payments & Promos",
+    "verdict": {
+      "parse_error": ""
+    },
+    "judge_tokens": 4241
+  },
+  {
+    "section": "V5 Account & General",
+    "verdict": {
+      "missing_in_b": [],
+      "missing_in_a": []
+    },
+    "judge_tokens": 3142
+  },
+  {
+    "section": "V6 Human Handoff",
+    "verdict": {
+      "parse_error": ""
+    },
+    "judge_tokens": 3604
+  },
+  {
+    "section": "Hard Guardrails",
+    "verdict": {
+      "missing_in_b": [],
+      "missing_in_a": [
+        "Legal threat handling: respond calmly, do not provide liability statements, open a priority ticket marked as legal escalation for senior human follow‑up."
+      ]
+    },
+    "judge_tokens": 3570
+  }
+]

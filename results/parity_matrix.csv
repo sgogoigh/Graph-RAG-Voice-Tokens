@@ -1,0 +1,52 @@
+scenario,direction,a_anchors,a_ok,b_nodes,b_ok,b_covers_ok,status
+S-V1-01,Happy,V1.status,True,ord_status,True,True,OK
+S-V1-02,Edge,V1.delayed,True,ord_delayed,True,True,OK
+S-V1-03,Edge,V1.cancel,True,ord_cancel,True,True,OK
+S-V1-04,Edge,V1.cancel,True,ord_cancel,True,True,OK
+S-V1-05,Edge,V1.lost,True,ord_lost,True,True,OK
+S-V1-06,Happy,V1.address,True,ord_address_change,True,True,OK
+S-V1-07,Edge,V1.address,True,ord_address_change,True,True,OK
+S-V1-08,Ambiguous,V1.elicit,True,elicit_order; ord_status,True,True,OK
+S-V2-01,Happy,V2.window,True,ret_window_check; ret_initiate,True,True,OK
+S-V2-02,Edge,V2.window,True,ret_out_of_window,True,True,OK
+S-V2-03,Edge,V2.window,True,ret_window_check; ret_initiate,True,True,OK
+S-V2-04,Edge,V2.finalsale,True,ret_final_sale,True,True,OK
+S-V2-05,Edge,V2.damaged,True,ret_damaged,True,True,OK
+S-V2-06,Happy,V2.exchange,True,ret_exchange,True,True,OK
+S-V2-07,Edge,V2.exchange,True,ret_exchange_oos,True,True,OK
+S-V2-08,Happy,V2.status,True,ret_status,True,True,OK
+S-V2-09,Edge,V2.refund,True,ret_refund_timeline,True,True,OK
+S-V2-10,Ambiguous,V2.elicit,True,elicit_order; ret_window_check,True,True,OK
+S-V3-01,Happy,V3.stock,True,prod_stock,True,True,OK
+S-V3-02,Edge,V3.stock,True,prod_stock; prod_restock,True,True,OK
+S-V3-03,Happy,V3.sizing,True,prod_sizing,True,True,OK
+S-V3-04,Happy,V3.care,True,prod_care,True,True,OK
+S-V3-05,Edge,V3.restock,True,prod_restock,True,True,OK
+S-V3-06,Ambiguous,V3.clarify,True,prod_clarify,True,True,OK
+S-V3-07,Edge,V3.bounds,True,prod_reco_bounds,True,True,OK
+S-V4-01,Edge,V4.duplicate,True,pay_duplicate_charge,True,True,OK
+S-V4-02,Happy,V4.promo,True,pay_promo_check,True,True,OK
+S-V4-03,Edge,V4.promo,True,pay_promo_check,True,True,OK
+S-V4-04,Edge,V4.promo,True,pay_promo_check,True,True,OK
+S-V4-05,Edge,V4.failed,True,pay_failed,True,True,OK
+S-V4-06,Happy,V4.giftcard,True,pay_giftcard,True,True,OK
+S-V4-07,Edge,V4.priceadjust,True,pay_price_adjust,True,True,OK
+S-V4-08,Escalation,V4.chargeback,True,pay_chargeback; handoff_human,True,True,OK
+S-V5-01,Happy,V5.update,True,acct_update,True,True,OK
+S-V5-02,Happy,V5.password,True,acct_password,True,True,OK
+S-V5-03,Edge,V5.complaint,True,acct_complaint; ret_damaged,True,True,OK
+S-V5-04,Happy,V5.feedback,True,acct_feedback,True,True,OK
+S-V5-05,Edge,V5.lockout,True,acct_lockout; handoff_human,True,True,OK
+S-V6-01,Escalation,V6.request,True,handoff_human,True,True,OK
+S-V6-02,Escalation,V6.twostrikes,True,handoff_human,True,True,OK
+S-V6-03,Escalation,V6.legal,True,guardrail_legal; handoff_human,True,True,OK
+S-V6-04,Escalation,V6.exception,True,ret_out_of_window; handoff_human,True,True,OK
+S-G-01,Guardrail,Guard.injection,True,guardrail_injection,True,True,OK
+S-G-02,Guardrail,Guard.privacy,True,guardrail_privacy,True,True,OK
+S-G-03,Guardrail,Guard.abuse,True,guardrail_abuse,True,True,OK
+S-G-04,Guardrail,Guard.offtopic,True,guardrail_offtopic,True,True,OK
+S-G-05,Guardrail,Guard.promptleak,True,guardrail_prompt_leak,True,True,OK
+S-G-06,Guardrail,Guard.fraud,True,guardrail_fraud,True,True,OK
+S-M-01,Multi-intent,V1.status; V3.sizing,True,ord_status; prod_sizing,True,True,OK
+S-M-02,Multi-intent,V2.window; V4.promo,True,ret_window_check; ret_initiate; pay_promo_check,True,True,OK
+S-M-03,Multi-intent,V5.complaint; V2.refund,True,acct_complaint; ret_refund_timeline,True,True,OK

@@ -1,0 +1,9 @@
+{
+  "agent_a_system.md": "96298418d782f60a230133d20628127e514ae753d8c98b5a927e2155c5ae5a3c",
+  "agent_b_system.md": "5404ef6ea6ebeebfa10ab6ffde91dda34d3f029a9a12361b7921c019fbd4955d",
+  "graph.json": "dbd8ec8ab426f6794ea0226d04911ba48269e67433b10c5b15ea1564c3d4622d",
+  "agent_model": "meta-llama/llama-4-scout-17b-16e-instruct",
+  "router_model": "llama-3.1-8b-instant",
+  "customer_model": "llama-3.1-8b-instant",
+  "snapshotted_at": "2026-07-05T03:13:38"
+}

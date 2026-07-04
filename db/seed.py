@@ -39,7 +39,9 @@ PRODUCTS = [
     ("P001", "Aurora Linen Shirt",      "tops",        "M", "White",        49.00, 25, 0, "Machine wash cold, hang dry"),
     ("P002", "Aurora Linen Shirt",      "tops",        "S", "White",        49.00,  0, 0, "Machine wash cold, hang dry"),
     ("P003", "Ridge Denim Jacket",      "outerwear",   "L", "Indigo",      129.00,  8, 0, "Machine wash cold inside out"),
-    ("P004", "Cloudsoft Hoodie",        "tops",        "M", "Heather Grey", 69.00, 40, 0, "Machine wash warm, tumble low"),
+    # P004 is priced BELOW O1012's unit_price (69.00) on purpose: S-V4-07 needs a real
+    # price drop for the price-adjustment scenario ($10 store credit).
+    ("P004", "Cloudsoft Hoodie",        "tops",        "M", "Heather Grey", 59.00, 40, 0, "Machine wash warm, tumble low"),
     ("P005", "Cloudsoft Hoodie",        "tops",        "L", "Heather Grey", 69.00, 35, 0, "Machine wash warm, tumble low"),
     ("P006", "Meridian Chinos",         "bottoms",     "32", "Khaki",       79.00, 15, 0, "Machine wash cold"),
     ("P007", "Solstice Maxi Dress",     "dresses",     "M", "Terracotta",   99.00, 12, 0, "Gentle cycle cold, line dry"),
@@ -188,9 +190,12 @@ def verify(conn: sqlite3.Connection) -> None:
     assert days_since_delivery("O1004") == 35, "S-V6-04 expects day 35 (Basic, outside)"
     assert days_since_delivery("O1005") == 35, "S-V2-03 expects day 35 (Gold, inside 40)"
     assert days_since_delivery("O1012") in range(0, 8), "S-V4-07 price-adjust inside 7d of delivery"
-    # price adjustment is measured from ORDER date:
+    # price adjustment is measured from ORDER date, and needs an actual price drop:
     o12 = date.fromisoformat(one("SELECT order_date FROM orders WHERE order_id='O1012'")[0])
     assert (ref - o12).days <= config.PRICE_ADJUST_WINDOW_DAYS, "S-V4-07 inside 7-day window"
+    paid = one("SELECT unit_price FROM order_items WHERE order_id='O1012' AND product_id='P004'")[0]
+    now_price = one("SELECT price FROM products WHERE product_id='P004'")[0]
+    assert now_price < paid, "S-V4-07 needs current price below the paid price"
 
     # --- final-sale orders (V2-04/05)
     assert one("SELECT product_id FROM order_items WHERE order_id='O1009'")[0] == "P011", "S-V2-04"

@@ -50,7 +50,9 @@ JUDGE_TEMPERATURE = 0.0
 # ---------------------------------------------------------------------------
 # Experiment matrix (PLAN.md §2 D6)
 # ---------------------------------------------------------------------------
-RUNS_PER_SCENARIO = 3
+# 2 (down from planned 3): Groq free-tier daily budgets make 3 runs a >2-week affair;
+# 2 runs still give a paired repetition per scenario. Raise on Dev Tier.
+RUNS_PER_SCENARIO = 2
 MAX_CUSTOMER_TURNS = 12          # hard stop per conversation
 REQUEST_TIMEOUT_S = 60
 RETRY_MAX_ATTEMPTS = 5           # exponential backoff for Groq rate limits

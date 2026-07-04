@@ -1,0 +1,3 @@
+scenario,agent,run,turns,prompt_tokens,completion_tokens,total_tokens,router_tokens,customer_tokens,latency_ms_total,end_reason,escalated,ts
+S-V1-01,agent_a,1,4,41807,336,42143,0,1432,29771.3,max_turns,False,2026-07-05T03:14:09
+S-V1-01,agent_b,1,3,16455,352,16807,2734,1355,28210.6,satisfied,False,2026-07-05T03:14:38

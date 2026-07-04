@@ -1,0 +1,8 @@
+# Core (needed from M0)
+groq>=0.13.0
+python-dotenv>=1.0.1
+
+# Analysis & visualization (needed from M7+)
+pandas>=2.2.0
+matplotlib>=3.9.0
+networkx>=3.3

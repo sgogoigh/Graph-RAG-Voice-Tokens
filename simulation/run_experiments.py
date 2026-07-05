@@ -38,8 +38,23 @@ from graph.engine import Graph  # noqa: E402
 from rag.store import RagStore  # noqa: E402
 from simulation.customer import CustomerSim, end_reason  # noqa: E402
 
-TURNS_CSV = config.METRICS_DIR / "turns.csv"
-CONVS_CSV = config.METRICS_DIR / "conversations.csv"
+# Output locations — mutable so side experiments (e.g. the H4 stress test) can run the
+# same harness into their own namespace via --out-root without touching matrix data.
+PATHS = {
+    "transcripts": config.TRANSCRIPTS_DIR,
+    "turns_csv": config.METRICS_DIR / "turns.csv",
+    "convs_csv": config.METRICS_DIR / "conversations.csv",
+    "snapshots": config.RESULTS_DIR / "prompt_snapshots",
+}
+
+
+def set_out_root(root: Path) -> None:
+    PATHS.update(
+        transcripts=root / "transcripts",
+        turns_csv=root / "metrics" / "turns.csv",
+        convs_csv=root / "metrics" / "conversations.csv",
+        snapshots=root / "prompt_snapshots",
+    )
 
 TURN_FIELDS = ["scenario", "agent", "run", "turn", "customer_msg", "agent_msg",
                "latency_ms", "prompt_tokens", "completion_tokens", "total_tokens",
@@ -53,7 +68,7 @@ GRAPH = Graph.load()
 
 
 def snapshot_sources() -> None:
-    snap = config.RESULTS_DIR / "prompt_snapshots"
+    snap = PATHS["snapshots"]
     snap.mkdir(parents=True, exist_ok=True)
     manifest = {}
     for src in [config.PROMPTS_DIR / "agent_a_system.md",
@@ -104,7 +119,7 @@ def make_agent(name: str):
 def run_conversation(agent_name: str, scenario: dict, run_no: int) -> dict:
     """Run one full conversation; returns the conversations.csv row."""
     sid = scenario["id"]
-    out_jsonl = config.TRANSCRIPTS_DIR / agent_name / f"{sid}_run{run_no}.jsonl"
+    out_jsonl = PATHS["transcripts"] / agent_name / f"{sid}_run{run_no}.jsonl"
     out_md = out_jsonl.with_suffix(".md")
 
     reseed()
@@ -153,13 +168,13 @@ def run_conversation(agent_name: str, scenario: dict, run_no: int) -> dict:
                    "tool_call_details": m.tool_calls, "path": m.extra.get("path", [])})
 
         if turn >= scenario["max_customer_turns"]:
-            append_csv(TURNS_CSV, TURN_FIELDS, turn_row)
+            append_csv(PATHS["turns_csv"], TURN_FIELDS, turn_row)
             break
 
         customer_msg, cust_rec = sim.reply(history)
         totals["customer"] += cust_rec.total_tokens
         turn_row["customer_tokens"] = cust_rec.total_tokens
-        append_csv(TURNS_CSV, TURN_FIELDS, turn_row)
+        append_csv(PATHS["turns_csv"], TURN_FIELDS, turn_row)
 
         r = end_reason(customer_msg)
         if r:
@@ -184,7 +199,7 @@ def run_conversation(agent_name: str, scenario: dict, run_no: int) -> dict:
         render_transcript_md(f"{agent_name} — {sid} run {run_no} ({reason})", md_turns),
         encoding="utf-8",
     )
-    append_csv(CONVS_CSV, CONV_FIELDS, conv_row)
+    append_csv(PATHS["convs_csv"], CONV_FIELDS, conv_row)
     return conv_row
 
 
@@ -194,16 +209,21 @@ def main() -> int:
     ap.add_argument("--runs", type=int, default=config.RUNS_PER_SCENARIO)
     ap.add_argument("--agents", default="agent_a,agent_b")
     ap.add_argument("--scenarios", default="", help="comma-separated scenario ids (default: all)")
+    ap.add_argument("--scenarios-file", default=str(config.ROOT / "simulation" / "scenarios.json"))
+    ap.add_argument("--out-root", default="", help="alternate results root (e.g. results/stress)")
     args = ap.parse_args()
 
-    scenarios = json.loads((config.ROOT / "simulation" / "scenarios.json").read_text(encoding="utf-8"))
+    if args.out_root:
+        set_out_root(Path(args.out_root))
+
+    scenarios = json.loads(Path(args.scenarios_file).read_text(encoding="utf-8"))
     if args.scenarios:
         want = set(args.scenarios.split(","))
         scenarios = [s for s in scenarios if s["id"] in want]
     agent_names = args.agents.split(",")
 
     snapshot_sources()
-    config.METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    PATHS["turns_csv"].parent.mkdir(parents=True, exist_ok=True)
 
     done = skipped = 0
     try:
@@ -212,7 +232,7 @@ def main() -> int:
                 # alternate which agent goes first per run (fairness vs time-of-day load)
                 order = agent_names if run_no % 2 == 1 else list(reversed(agent_names))
                 for agent_name in order:
-                    out = config.TRANSCRIPTS_DIR / agent_name / f"{scenario['id']}_run{run_no}.jsonl"
+                    out = PATHS["transcripts"] / agent_name / f"{scenario['id']}_run{run_no}.jsonl"
                     if out.exists():
                         skipped += 1
                         continue

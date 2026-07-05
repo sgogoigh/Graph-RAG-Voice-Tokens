@@ -20,6 +20,14 @@ The judge prompt was made direction-aware and the review re-run.
 | 1 | V3: "report stock exactly as returned by the tool" missing in A | **Dismissed — present in A** | A core rules: "Never invent data. Order details, stock, prices, promo terms, and return states come only from tools." (global section, outside the V3 chunk shown) |
 | 2 | Guardrails: legal-threat handling missing in A | **Dismissed — present in A** | A §V6.legal (compared in the V6 chunk, which returned 0 findings with guardrail_legal included) |
 
+## Run 3 (2026-07-05, after agent_b_system.md packet-hygiene edit): 4 findings — all dismissed
+Same false-positive class as run 2 — the rule exists in a DIFFERENT Agent A section than
+the chunk compared: stock fidelity → A core Truth rule; out-of-window return handling →
+A §V2.window (its own V2 comparison: 0 findings); priority for chargebacks/fraud →
+A §V4.chargeback + §Guard.fraud; legal-threat handling → A §V6.legal. No policy edit was
+made in this iteration (only packet-formatting mechanics), so semantic parity is
+unchanged by construction.
+
 ## Verdict
 - Tag audit (`parity_matrix.csv`): **51/51 scenarios anchored on both sides — PASS**
 - Semantic review: **0 substantive gaps after triage — PASS**

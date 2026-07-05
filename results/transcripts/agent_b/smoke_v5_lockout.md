@@ -2,5 +2,5 @@
 
 **Customer:** I need to see my orders but I lost access to my old email account. My name is Omar Haddad.
 
-**Agent:** I've created a ticket for you, Omar. Our human support team will review it and get back to you. They'll help you recover your account and access your order history. You can expect a response between 9am-6pm ET, Monday to Friday. If you're reaching out outside these hours, they'll schedule a callback for the next business day.
-> turn: 8544 ms | 5197p + 214c tokens | 3 API call(s) | tools: create_ticket | node: acct_lockout
+**Agent:** I'm sorry to hear you lost access to your old email, Omar. Protecting your account security is our top priority, so I've opened a special ticket for you. Our human team will verify your identity another way and help you recover access. They're available 9am–6pm ET Monday–Friday: you'll hear from them promptly if you reach out during those hours.
+> turn: 5915 ms | 4667p + 128c tokens | 3 API call(s) | tools: create_ticket | node: acct_lockout

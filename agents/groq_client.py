@@ -1,7 +1,15 @@
-"""Shared Groq client with retry/backoff and per-call usage accounting.
+"""Shared multi-provider LLM client with retry/backoff and per-call usage accounting.
 
 Every API call in the experiment (agents, router, customer, judge) goes through
 `chat()` so that token usage and latency are captured uniformly.
+
+Providers are selected by model-string prefix:
+  "gemini/<model>"   -> Google Gemini via its OpenAI-compatible endpoint
+  "mistral/<model>"  -> Mistral La Plateforme (OpenAI-compatible)
+  anything else      -> Groq
+
+Both providers speak the OpenAI chat-completions shape (messages, tools, usage,
+tool_calls), so the rest of the codebase never branches on provider.
 """
 
 from __future__ import annotations
@@ -10,11 +18,22 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+import openai
 from groq import Groq, APIConnectionError, APIStatusError, RateLimitError
 
 import config
 
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+MISTRAL_BASE_URL = "https://api.mistral.ai/v1"
+
 _client: Groq | None = None
+_gemini: openai.OpenAI | None = None
+_mistral: openai.OpenAI | None = None
+
+# provider-agnostic exception groups (groq and openai SDKs mirror each other's types)
+RATE_LIMIT_ERRORS = (RateLimitError, openai.RateLimitError)
+CONNECTION_ERRORS = (APIConnectionError, openai.APIConnectionError)
+STATUS_ERRORS = (APIStatusError, openai.APIStatusError)
 
 
 def client() -> Groq:
@@ -22,6 +41,34 @@ def client() -> Groq:
     if _client is None:
         _client = Groq(api_key=config.GROQ_API_KEY, timeout=config.REQUEST_TIMEOUT_S)
     return _client
+
+
+def gemini_client() -> openai.OpenAI:
+    global _gemini
+    if _gemini is None:
+        if not config.GEMINI_API_KEY:
+            raise RuntimeError("GEMINI_API_KEY missing from .env")
+        _gemini = openai.OpenAI(api_key=config.GEMINI_API_KEY, base_url=GEMINI_BASE_URL,
+                                timeout=config.REQUEST_TIMEOUT_S)
+    return _gemini
+
+
+def mistral_client() -> openai.OpenAI:
+    global _mistral
+    if _mistral is None:
+        if not config.MISTRAL_API_KEY:
+            raise RuntimeError("MISTRAL_API_KEY missing from .env")
+        _mistral = openai.OpenAI(api_key=config.MISTRAL_API_KEY, base_url=MISTRAL_BASE_URL,
+                                 timeout=config.REQUEST_TIMEOUT_S)
+    return _mistral
+
+
+def _create(model: str, kwargs: dict) -> Any:
+    if model.startswith("gemini/"):
+        return gemini_client().chat.completions.create(model=model.split("/", 1)[1], **kwargs)
+    if model.startswith("mistral/"):
+        return mistral_client().chat.completions.create(model=model.split("/", 1)[1], **kwargs)
+    return client().chat.completions.create(model=model, **kwargs)
 
 
 @dataclass
@@ -68,7 +115,6 @@ def chat(
         last_attempt = attempt == config.RETRY_MAX_ATTEMPTS - 1
         try:
             kwargs: dict[str, Any] = dict(
-                model=model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
@@ -76,7 +122,7 @@ def chat(
             if tools and not (last_attempt and _is_tool_use_failure(last_err)):
                 kwargs["tools"] = tools
                 kwargs["tool_choice"] = "auto"
-            resp = client().chat.completions.create(**kwargs)
+            resp = _create(model, kwargs)
             latency_ms = (time.perf_counter() - t0) * 1000
             u = resp.usage
             return ChatResult(
@@ -90,26 +136,33 @@ def chat(
                 ),
                 raw=resp,
             )
-        except RateLimitError as e:
-            # A daily-budget (TPD) 429 replenishes in ~an hour — backoff is pointless.
-            if "per day" in str(e) or "TPD" in str(e):
+        except RATE_LIMIT_ERRORS as e:
+            # A daily-budget 429 replenishes in ~an hour+ — backoff is pointless.
+            # Groq phrases it "per day (TPD/RPD)"; Gemini quota ids say "...PerDay...".
+            if _is_daily_limit(e):
                 raise RuntimeError(
-                    f"Groq DAILY token budget exhausted for {model}. "
+                    f"DAILY budget exhausted for {model}. "
                     "Wait for the window to roll or upgrade the tier; see error above."
                 ) from e
             last_err = e
             time.sleep(config.RETRY_BASE_DELAY_S * (2**attempt))
-        except APIConnectionError as e:
+        except CONNECTION_ERRORS as e:
             last_err = e
             time.sleep(config.RETRY_BASE_DELAY_S * (2**attempt))
-        except APIStatusError as e:
+        except STATUS_ERRORS as e:
             if e.status_code in (500, 502, 503) or _is_tool_use_failure(e):
                 last_err = e
                 time.sleep(config.RETRY_BASE_DELAY_S * (2**attempt))
             else:
                 raise
-    raise RuntimeError(f"Groq call failed after {config.RETRY_MAX_ATTEMPTS} attempts") from last_err
+    raise RuntimeError(f"LLM call failed after {config.RETRY_MAX_ATTEMPTS} attempts") from last_err
+
+
+def _is_daily_limit(err: Exception) -> bool:
+    s = str(err).lower().replace(" ", "").replace("_", "")
+    return "perday" in s or "tpd" in s or "rpd" in s
 
 
 def _is_tool_use_failure(err: Exception | None) -> bool:
-    return isinstance(err, APIStatusError) and err.status_code == 400 and "tool_use_failed" in str(err)
+    return (isinstance(err, STATUS_ERRORS) and getattr(err, "status_code", None) == 400
+            and "tool_use_failed" in str(err))

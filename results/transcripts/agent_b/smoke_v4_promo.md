@@ -2,5 +2,5 @@
 
 **Customer:** My code FLASH15 isn't working at checkout and my cart is $94. Why?
 
-**Agent:** The FLASH15 code is no longer valid since it expired yesterday, July 3rd. Unfortunately, this means it cannot be applied to your current order. However, we have other active promotions: WELCOME10 for new customers and SUMMER20 for orders over $75. Would you like me to check if any of these apply to your order?
-> turn: 10174 ms | 5343p + 198c tokens | 3 API call(s) | tools: check_promo | node: pay_promo_check
+**Agent:** The promo code FLASH15 expired yesterday, July 3rd. Unfortunately, we can't extend it or honor it for you. The SUMMER20 code is still active for 20% off orders of $75 or more through July 31st — would you like to use that instead?
+> turn: 1376 ms | 4853p + 86c tokens | 3 API call(s) | tools: check_promo | node: pay_promo_check

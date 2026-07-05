@@ -1,5 +1,6 @@
 # Core (needed from M0)
 groq>=0.13.0
+openai>=1.60.0          # used for Gemini via its OpenAI-compatible endpoint
 python-dotenv>=1.0.1
 
 # Analysis & visualization (needed from M7+)

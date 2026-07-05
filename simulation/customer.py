@@ -31,11 +31,13 @@ Rules:
 - Write ONLY the customer's next chat message: plain text, 1-3 short sentences, no meta \
 commentary, no stage directions, never mention being an AI or a test.
 - Don't volunteer every detail at once; answer what the agent asks.
-- If your goal is fully handled or you accept the final outcome, reply with exactly \
-<<END_SATISFIED>> and nothing else.
-- If you are giving up unhappy, reply with exactly <<END_FRUSTRATED>> and nothing else.
-- Do not end the conversation before the agent has actually addressed (or clearly \
-refused) your request."""
+- END PROMPTLY: the moment the agent has answered your question, completed your request, \
+or clearly and finally refused it (per your scenario behavior), your VERY NEXT message \
+must be exactly <<END_SATISFIED>> (goal met / outcome accepted) or <<END_FRUSTRATED>> \
+(giving up unhappy) and nothing else. No thank-you messages, no small talk, no filler \
+questions - real customers close the chat.
+- Do not end before the agent has actually addressed (or clearly refused) your request, \
+and not before you have done everything in your scenario behavior."""
 
 
 class CustomerSim:
@@ -71,8 +73,10 @@ class CustomerSim:
 
 
 def end_reason(customer_msg: str) -> str | None:
-    if "<<END_SATISFIED>>" in customer_msg:
+    # Tolerant: small models mangle the delimiters (e.g. «END_SATISFIED») — match the
+    # core token, not the brackets.
+    if "END_SATISFIED" in customer_msg.upper():
         return "satisfied"
-    if "<<END_FRUSTRATED>>" in customer_msg:
+    if "END_FRUSTRATED" in customer_msg.upper():
         return "frustrated"
     return None

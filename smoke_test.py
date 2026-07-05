@@ -1,22 +1,28 @@
-"""M0 acceptance test: one successful Groq API call per model tier using .env key.
+"""Smoke test: one successful call per configured model tier (Groq and/or Gemini),
+plus a tool-calling check on the agent model (the agents depend on function calling).
 
 Run:  .venv/Scripts/python smoke_test.py
 """
 
 import sys
-import time
 
-from groq import Groq
+from agents.groq_client import chat
 
 import config
 
+PING_TOOL = [{
+    "type": "function",
+    "function": {
+        "name": "ping",
+        "description": "Echo a value back. Call this with value='pong'.",
+        "parameters": {"type": "object",
+                       "properties": {"value": {"type": "string"}},
+                       "required": ["value"]},
+    },
+}]
+
 
 def main() -> int:
-    if not config.GROQ_API_KEY:
-        print("FAIL: GROQ_API_KEY not found in .env")
-        return 1
-
-    client = Groq(api_key=config.GROQ_API_KEY)
     models = {
         "agent": config.AGENT_MODEL,
         "router/customer": config.ROUTER_MODEL,
@@ -25,24 +31,30 @@ def main() -> int:
 
     ok = True
     for role, model in models.items():
-        t0 = time.perf_counter()
         try:
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": "Reply with exactly: OK"}],
-                max_tokens=8,
-                temperature=0,
-            )
-            ms = (time.perf_counter() - t0) * 1000
-            u = resp.usage
-            print(
-                f"PASS  {role:<16} {model:<28} {ms:7.0f} ms  "
-                f"tokens: {u.prompt_tokens}p + {u.completion_tokens}c  "
-                f"-> {resp.choices[0].message.content!r}"
-            )
+            r = chat(model, [{"role": "user", "content": "Reply with exactly: OK"}],
+                     temperature=0, max_tokens=64, purpose="smoke")
+            rec = r.record
+            print(f"PASS  {role:<16} {model:<32} {rec.latency_ms:7.0f} ms  "
+                  f"tokens: {rec.prompt_tokens}p + {rec.completion_tokens}c  "
+                  f"-> {(r.message.content or '')[:20]!r}")
         except Exception as e:  # noqa: BLE001 - report and continue
-            print(f"FAIL  {role:<16} {model:<28} {type(e).__name__}: {e}")
+            print(f"FAIL  {role:<16} {model:<32} {type(e).__name__}: {str(e)[:140]}")
             ok = False
+
+    # tool-calling check on the agent model
+    try:
+        r = chat(config.AGENT_MODEL,
+                 [{"role": "user", "content": "Call the ping tool with value='pong'."}],
+                 tools=PING_TOOL, temperature=0, max_tokens=64, purpose="smoke")
+        tcs = r.message.tool_calls or []
+        called = tcs and tcs[0].function.name == "ping"
+        print(f"{'PASS' if called else 'FAIL'}  {'agent tool-call':<16} "
+              f"{config.AGENT_MODEL:<32} tool_calls={[(t.function.name, t.function.arguments) for t in tcs]}")
+        ok = ok and bool(called)
+    except Exception as e:  # noqa: BLE001
+        print(f"FAIL  agent tool-call  {type(e).__name__}: {str(e)[:140]}")
+        ok = False
 
     print("\nSmoke test:", "ALL PASS" if ok else "FAILURES PRESENT")
     return 0 if ok else 1

@@ -1,9 +1,9 @@
 {
   "agent_a_system.md": "96298418d782f60a230133d20628127e514ae753d8c98b5a927e2155c5ae5a3c",
-  "agent_b_system.md": "5404ef6ea6ebeebfa10ab6ffde91dda34d3f029a9a12361b7921c019fbd4955d",
-  "graph.json": "dbd8ec8ab426f6794ea0226d04911ba48269e67433b10c5b15ea1564c3d4622d",
-  "agent_model": "meta-llama/llama-4-scout-17b-16e-instruct",
-  "router_model": "llama-3.1-8b-instant",
-  "customer_model": "llama-3.1-8b-instant",
-  "snapshotted_at": "2026-07-05T03:13:38"
+  "agent_b_system.md": "b15482cd77b0f417c6d56eab10af1e991466826683b06f5bcd32e9cb43576442",
+  "graph.json": "705be922ebb96503926734ed7527e157791d73da75222d7ea857e2ae3a32f63f",
+  "agent_model": "mistral/mistral-small-2506",
+  "router_model": "mistral/mistral-small-2506",
+  "customer_model": "mistral/mistral-small-2506",
+  "snapshotted_at": "2026-07-05T09:37:17"
 }

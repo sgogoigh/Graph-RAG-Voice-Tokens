@@ -335,3 +335,95 @@ embedding-based routing, larger graphs, degradation stress test at 30+ turns).
 - **Judge bias** → blind labels, different model family, double judging, rubric anchored to DB ground truth.
 - **Parity drift while authoring** → Checklist.md written first; both sides derived from it; automated audit gate before any experiment run.
 - **Customer simulator leaks meta-behavior** → strict persona prompt + transcript spot checks before the full matrix.
+
+---
+---
+
+# PHASE 2 — Third Arm: Agent C, Conventional Vector RAG (planned 2026-07-05)
+
+Phase 1 compared a monolithic prompt (A) against Graph-RAG (B). Phase 2 adds the missing
+baseline every practitioner will ask about: **vanilla RAG** — one source document, local
+chunking, embeddings in a vector DB, top-k similarity retrieval per turn. The three-way
+comparison then cleanly decomposes the effect:
+
+- **A vs C** = what *any* retrieval buys over a monolithic prompt (token effect).
+- **B vs C** = what *graph structure* (typed nodes, session state, routed transitions,
+  guardrail precedence) buys over *similarity* retrieval at comparable context size —
+  the sharpest form of this project's research question.
+
+## P2.1 Agent C architecture
+
+| Layer | Design | Rationale |
+|---|---|---|
+| **Source document** | `rag/corpus/loomora_manual.md` — **derived verbatim from `agent_a_system.md`** (policy content identical by construction; only the "how you work" mechanics paragraph is swapped for C's retrieval mechanics) | Content parity with A is guaranteed by derivation, and A↔B parity is already proven — so C inherits parity with both |
+| **Chunking** | Local, structure-aware: split on the manual's `###` section boundaries (V1.status, V2.window, Guard.privacy, …), target 150–350 tokens/chunk, no mid-policy splits; each chunk tagged with its section anchor | Matches Agent B's node-packet granularity — C and B inject comparably-sized context, isolating the *retrieval mechanism* as the variable |
+| **Embeddings** | Local `sentence-transformers/all-MiniLM-L6-v2` (384-d, CPU, deterministic) | Free, offline, reproducible; no API budget entanglement; embedding latency (~10 ms) is measured and reported |
+| **Vector DB** | **ChromaDB**, persistent local store at `rag/chroma/` | The user-specified "vector db"; zero-infra, versionable |
+| **Per-turn retrieval** | Query = current user message + last agent message (300-char tail); **top-k = 3** chunks (ablation: k ∈ {2,3,5} on the 12-probe set before the matrix); retrieved chunks injected into the system prompt **for that turn only** (same injection mechanics as B's packet — never accumulated into history) | Mirrors B's turn-scoped context exactly; k=3 ≈ one node packet's information budget |
+| **System prompt** | `agents/prompts/agent_c_system.md`: **identical to Agent B's** except the `<workflow_step>` mechanics paragraph becomes `<retrieved_guidance>` mechanics ("the retrieved excerpts are your authoritative policy source this turn; if they don't cover the request, say so / escalate rather than invent") | The eight non-negotiable global rules stay word-for-word the same — prompt parity with B |
+| **No router, no state** | C has no session state and no LLM routing call | That IS the baseline's definition; C's retrieval cost is embedding compute (measured in ms, ~zero tokens), so C is expected to be the *latency* winner — an honest advantage |
+
+## P2.2 Parity protocol extension (no-bias, three-way)
+1. **Tag audit**: `parity_audit.py` gains a C column — for every Checklist scenario, its
+   `A:` section anchors must exist **as chunk tags** in the vector store (guaranteed by
+   the derivation + chunker, but machine-verified anyway). Output: `parity_matrix.csv`
+   grows `c_ok`.
+2. **Retrieval sanity probes** (analog of B's router probes): for the same 12 probe
+   messages, assert the top-3 retrieved chunks include the section the scenario needs
+   (e.g. "Come on, it's ONE day past" → must retrieve `V2.window`/out-of-window text).
+   Recall@3 reported; failures fixed by chunking adjustments, never by editing policy
+   content (that would break parity).
+3. **Semantic parity**: not re-run for C — the corpus is a verbatim derivation of A's
+   manual; the derivation script asserts the diff is exactly the mechanics paragraph.
+4. **Honest accounting**: C's retrieval adds ~0 LLM tokens; its embedding+search wall
+   time is included in `latency_ms` (as B's router time is). Chunk tokens injected per
+   turn are counted in `prompt_tokens` exactly like B's packets.
+
+## P2.3 Measurement & hypotheses (same harness, same judge, same scenarios)
+Same 51 scenarios × 2 runs → **+102 conversations** (~1.3–2M Mistral tokens). Same
+blind deduction-based judge; same metrics CSVs (agent = `agent_c`); `turns.csv` gains
+`retrieved_chunks` + `retrieval_ms` in the extra metadata.
+
+- **H5 (tokens)**: C ≈ B on per-turn prompt tokens (both turn-scoped); both ≪ A.
+- **H6 (quality — the interesting one)**: C < B on policy-edge and multi-step scenarios:
+  similarity retrieval has no state (can't know the conversation is mid-return-flow),
+  no guardrail precedence (an injection attempt embeds *near nothing policy-ish*), and
+  no transition discipline (nothing prevents skipping eligibility checks). Predicted
+  failure signatures, checklist-mapped: S-V2-02/06/07 (flow order), S-G-01..06
+  (guardrail recall), S-M-01..03 (only one intent's chunks retrieved).
+- **H7 (latency)**: C < B and ≈ A per turn (no serial router call; local embedding).
+- If H5+H7 hold and H6 shows a real quality gap, the conclusion sharpens to: *tokens are
+  saved by turn-scoping context (any RAG); correctness under policy pressure is bought
+  by the graph's structure* — with the frontier plot showing three distinct clusters.
+
+## P2.4 Repo additions
+```
+rag/
+├── build_corpus.py       ← derive loomora_manual.md from agent_a_system.md + assert the diff
+├── chunker.py            ← section-aware chunking → chunks.jsonl (id, anchor, text, tokens)
+├── store.py              ← ChromaDB build/load + embed + top-k query (returns ids, scores, ms)
+├── probe_retrieval.py    ← the 12 recall@3 sanity probes (P2.2.2)
+└── chroma/               ← persistent vector store (gitignored)
+agents/agent_c.py          ← ToolLoopAgent subclass: retrieve → inject → same tool loop
+agents/prompts/agent_c_system.md
+```
+`requirements.txt` += `chromadb`, `sentence-transformers`. Visualization: Agent C takes
+categorical slot 3 (yellow `#eda100`; sub-3:1 on light surface → relief rule: direct
+labels stay on, tables in REPORT.md). All five figures become three-series; the
+efficiency frontier is the headline (three clusters expected).
+
+## P2.5 Milestones
+| # | Milestone | Done when |
+|---|---|---|
+| M10 | Corpus derivation + chunker + Chroma store built | derivation diff-assert passes; chunk count/size stats printed; store queryable |
+| M11 | Retrieval probes + k ablation | recall@3 ≥ 11/12 on probe set with chosen k |
+| M12 | Agent C + crisp prompt + smoke suite | same 7 smoke conversations pass review |
+| M13 | Parity audit extension green | `parity_matrix.csv` c_ok column all true |
+| M14 | Matrix arm C (51 × 2 = 102 conversations) | transcripts + metrics on disk |
+| M15 | Judge arm C + regenerate 3-way figures + REPORT v2 | H5–H7 answered with numbers; B-vs-C discussion written |
+
+## P2.6 Risks
+- **Chunking granularity distorts comparison** → chunk size targeted at node-packet size; k ablated on probes before the matrix.
+- **Retrieval misses on terse/emotional messages** ("Come on, ONE day past") → query includes last agent message tail for context; measured by probes, reported as C's routing-analog accuracy.
+- **sentence-transformers/torch install weight on Windows** → CPU wheels; fallback to ChromaDB's built-in ONNX MiniLM (`all-MiniLM-L6-v2` via onnxruntime) if torch install fights.
+- **Three-way judging cost** → +~0.7M judge tokens on Mistral (fine); gpt-oss cross-check extended to include C conversations.

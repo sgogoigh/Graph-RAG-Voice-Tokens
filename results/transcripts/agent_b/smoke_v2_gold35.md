@@ -2,5 +2,5 @@
 
 **Customer:** Hello, I want to return the wool coat from O1005, it's just not me. Email emily.watson@example.com.
 
-**Agent:** Hi Emily! I can help with that. Let me check the return policy for your wool coat from order O1005. Before I proceed, can you confirm your phone number so I can locate your account?
-> turn: 791 ms | 2947p + 49c tokens | 2 API call(s) | tools: none | node: ret_window_check
+**Agent:** Hi Emily! I can help with that. Let me check the return eligibility for you. First, I'll need to verify your identity. Can you please confirm your phone number or order ID associated with your email?
+> turn: 1953 ms | 3075p + 48c tokens | 2 API call(s) | tools: none | node: ret_window_check

@@ -2,5 +2,5 @@
 
 **Customer:** I need to see my orders but I lost access to my old email account. My name is Omar Haddad.
 
-**Agent:** I'm sorry to hear you lost access to your old email, Omar. Protecting your account security is our top priority, so I've opened a special ticket for you. Our human team will verify your identity another way and help you recover access. They're available 9am–6pm ET Monday–Friday: you'll hear from them promptly if you reach out during those hours.
-> turn: 5915 ms | 4667p + 128c tokens | 3 API call(s) | tools: create_ticket | node: acct_lockout
+**Agent:** I'm sorry to hear that, Omar. To protect your account, I'll need to verify your identity before we proceed. I'll create a secure ticket for our team to assist you with account recovery. Please bear with me for a moment while I do that.
+> turn: 1520 ms | 2806p + 59c tokens | 2 API call(s) | tools: none | node: acct_lockout

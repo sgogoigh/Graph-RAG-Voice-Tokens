@@ -115,6 +115,9 @@ architecture.
 
 ### Future work
 Hybrid B+C agent (graph state + similarity fallback for off-graph turns); voice
-pipeline; 15–30-turn degradation stress test (H4); embedding cache + speculative
-routing to close the latency gap with A; replication on a second model family;
+pipeline; 15–30-turn degradation stress test (H4) — **done**, see
+`results/stress/STRESS_H4.md`; speculative routing to close the latency gap with A —
+**prototyped and measured**, see `results/spec_router/SPEC_ROUTER.md` (hits remove the
+router from the serial path: ≈ −0.15 s/turn expected for ≈ +9% tokens at matrix
+stay/eligibility rates); embedding cache for C; replication on a second model family;
 reranker-based retrieval for C as a stronger similarity baseline.

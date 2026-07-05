@@ -1,9 +1,11 @@
-"""M6 tag-level parity audit (PLAN.md §9.2) — offline, no API.
+"""M6/M13 tag-level parity audit (PLAN.md §9.2, P2.2) — offline, no API.
 
 For every Checklist.md scenario, assert:
   A-side: every `A:` anchor literally appears in agents/prompts/agent_a_system.md
   B-side: every `B:` node id exists in graph/graph.json, AND the scenario id appears
           in the union of those nodes' `covers` tags (no phantom mappings)
+  C-side: every `A:` anchor exists as a retrievable chunk anchor in rag/chunks.jsonl
+          (Agent C's corpus derives from A's manual, so A's anchors ARE C's anchors)
 
 Writes results/parity_matrix.csv and exits 1 on any gap.
 
@@ -32,6 +34,9 @@ def main() -> int:
     prompt_a = (config.PROMPTS_DIR / "agent_a_system.md").read_text(encoding="utf-8")
     graph = json.loads(config.GRAPH_PATH.read_text(encoding="utf-8"))
     nodes = {n["id"]: n for n in graph["nodes"]}
+    chunks_path = config.ROOT / "rag" / "chunks.jsonl"
+    chunk_anchors = ({json.loads(x)["anchor"] for x in chunks_path.read_text(encoding="utf-8").splitlines() if x.strip()}
+                     if chunks_path.exists() else set())
 
     rows = ROW_RE.findall(checklist)
     if not rows:
@@ -47,8 +52,9 @@ def main() -> int:
         b_missing = [b for b in b_nodes if b not in nodes]
         covers_union = {tag for b in b_nodes if b in nodes for tag in nodes[b].get("covers", [])}
         covers_ok = sid in covers_union
+        c_missing = [a for a in anchors if a not in chunk_anchors]
 
-        ok = not a_missing and not b_missing and covers_ok
+        ok = not a_missing and not b_missing and covers_ok and not c_missing
         gaps += not ok
         out_rows.append({
             "scenario": sid,
@@ -58,6 +64,7 @@ def main() -> int:
             "b_nodes": "; ".join(b_nodes),
             "b_ok": not b_missing,
             "b_covers_ok": covers_ok,
+            "c_ok": not c_missing,
             "status": "OK" if ok else "GAP",
         })
         if not ok:
@@ -68,6 +75,8 @@ def main() -> int:
                 detail.append(f"B missing nodes {b_missing}")
             if not covers_ok:
                 detail.append("scenario not in B nodes' covers")
+            if c_missing:
+                detail.append(f"C missing chunk anchors {c_missing}")
             print(f"GAP  {sid}: {'; '.join(detail)}")
 
     out = config.RESULTS_DIR / "parity_matrix.csv"

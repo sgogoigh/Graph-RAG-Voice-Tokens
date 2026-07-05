@@ -28,6 +28,23 @@ A §V4.chargeback + §Guard.fraud; legal-threat handling → A §V6.legal. No po
 made in this iteration (only packet-formatting mechanics), so semantic parity is
 unchanged by construction.
 
+## Run 4 (2026-07-05, after the symmetric anti-fabrication rule + Phase-2 corpus rebuild)
+**Judge-model incident:** the first re-run used `config.JUDGE_MODEL` (now Mistral-small,
+changed in M8 for Q-C budget reasons) and produced **51 findings — fabricated**: spot
+checks showed the "missing" rules present verbatim (e.g. refund timing in `ord_cancel`,
+48h rule in `ord_lost`, store-credit-free in `ret_initiate`). Semantic parity is a
+careful-reading task; the script is now PINNED to the cross-check model
+(`openai/gpt-oss-120b`), whose re-run produced 7 findings, all dismissed:
+| Finding | Verdict |
+|---|---|
+| 4× "missing in A": tier windows / window math / no-initiate-outside-window / V2 ticket routing (V6 section) | Dismissed — all verbatim in A §V2.window; cross-section artifact |
+| "Generic exception rule missing in B" | Dismissed — B system prompt "No exceptions… only exception path is a human-review ticket" + handoff_human |
+| "Privacy → lockout path missing in B" | Dismissed — exists as graph EDGE guardrail_privacy→acct_lockout (the judge dump includes node instructions, not edges) |
+| "Legal guardrail missing in A" | Dismissed — A §V6.legal (recurring artifact, see Run 2) |
+
+The anti-fabrication sentence itself is word-identical in all three prompts (A core
+rules, B Truth rule, C Truth rule) and flows into C's corpus via the asserted derivation.
+
 ## Verdict
 - Tag audit (`parity_matrix.csv`): **51/51 scenarios anchored on both sides — PASS**
 - Semantic review: **0 substantive gaps after triage — PASS**

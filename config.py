@@ -71,6 +71,14 @@ RETRY_MAX_ATTEMPTS = 5           # exponential backoff for Groq rate limits
 RETRY_BASE_DELAY_S = 2.0
 
 # ---------------------------------------------------------------------------
+# Agent C (vanilla RAG) retrieval — M11 ablation chose k=3: recall@3 == recall@5
+# (11/13) with ~40% less injected context (~300 tokens/turn ≈ B's packet size).
+# The two persistent probe failures are guardrail-recall cases (H6's predicted
+# failure mode) — measured, not tuned away. See PLAN.md P2.2.
+# ---------------------------------------------------------------------------
+RAG_TOP_K = 3
+
+# ---------------------------------------------------------------------------
 # Simulated "today" — ALL seeded dates and window math anchor to this, so the
 # experiment is reproducible regardless of when it is actually run.
 # ---------------------------------------------------------------------------

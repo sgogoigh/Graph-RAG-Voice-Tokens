@@ -31,9 +31,11 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import config  # noqa: E402
 from agents.agent_a import AgentA  # noqa: E402
 from agents.agent_b import AgentB  # noqa: E402
+from agents.agent_c import AgentC  # noqa: E402
 from agents.base import render_transcript_md  # noqa: E402
 from db import seed as dbseed  # noqa: E402
 from graph.engine import Graph  # noqa: E402
+from rag.store import RagStore  # noqa: E402
 from simulation.customer import CustomerSim, end_reason  # noqa: E402
 
 TURNS_CSV = config.METRICS_DIR / "turns.csv"
@@ -56,7 +58,9 @@ def snapshot_sources() -> None:
     manifest = {}
     for src in [config.PROMPTS_DIR / "agent_a_system.md",
                 config.PROMPTS_DIR / "agent_b_system.md",
-                config.GRAPH_PATH]:
+                config.PROMPTS_DIR / "agent_c_system.md",
+                config.GRAPH_PATH,
+                config.ROOT / "rag" / "chunks.jsonl"]:
         text = src.read_text(encoding="utf-8")
         (snap / src.name).write_text(text, encoding="utf-8")
         manifest[src.name] = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -84,8 +88,17 @@ def append_csv(path: Path, fields: list[str], row: dict) -> None:
         w.writerow(row)
 
 
+_RAG_STORE: RagStore | None = None
+
+
 def make_agent(name: str):
-    return AgentA() if name == "agent_a" else AgentB(GRAPH)
+    if name == "agent_a":
+        return AgentA()
+    if name == "agent_b":
+        return AgentB(GRAPH)
+    global _RAG_STORE
+    _RAG_STORE = _RAG_STORE or RagStore()  # load the vector store once per session
+    return AgentC(_RAG_STORE)
 
 
 def run_conversation(agent_name: str, scenario: dict, run_no: int) -> dict:

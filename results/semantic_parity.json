@@ -4,65 +4,69 @@
     "verdict": {
       "parse_error": ""
     },
-    "judge_tokens": 3969
+    "judge_tokens": 4051
   },
   {
     "section": "V1 Orders & Shipping",
     "verdict": {
       "parse_error": ""
     },
-    "judge_tokens": 4172
+    "judge_tokens": 4213
   },
   {
     "section": "V2 Returns & Refunds",
     "verdict": {
       "parse_error": ""
     },
-    "judge_tokens": 4979
+    "judge_tokens": 5041
   },
   {
     "section": "V3 Products & Sizing",
     "verdict": {
-      "missing_in_b": [],
-      "missing_in_a": [
-        "Require reporting stock exactly as returned by the tool (no modification or summarization beyond the raw data)"
-      ]
+      "parse_error": ""
     },
-    "judge_tokens": 3431
+    "judge_tokens": 3914
   },
   {
     "section": "V4 Payments & Promos",
     "verdict": {
       "parse_error": ""
     },
-    "judge_tokens": 4268
+    "judge_tokens": 4309
   },
   {
     "section": "V5 Account & General",
     "verdict": {
-      "parse_error": ""
+      "missing_in_b": [],
+      "missing_in_a": []
     },
-    "judge_tokens": 3644
+    "judge_tokens": 3225
   },
   {
     "section": "V6 Human Handoff",
     "verdict": {
-      "missing_in_b": [],
+      "missing_in_b": [
+        "Generic policy‑exception handling rule: respond compassionately to any exception plea, create an exception‑review ticket, and state you cannot grant the exception yourself (not limited to returns)."
+      ],
       "missing_in_a": [
-        "Return outside the window: decline the return, show the math (delivered date, days elapsed) and the specific policy windows (30 days for Basic/Silver, 40 days for Gold), and never initiate the return.",
-        "When creating a ticket for a handoff, mark it as priority for chargebacks and suspected fraud (in addition to legal threats)."
+        "Specific return‑window durations per membership tier (30 days for Basic/Silver, 40 days for Gold).",
+        "Requirement to calculate and show the return‑window math (delivery date, days elapsed, applicable window).",
+        "Prohibition to initiate a return when it is outside the allowed window.",
+        "Routing of exception‑review tickets to a specific vertical (V2) for out‑of‑window returns."
       ]
     },
-    "judge_tokens": 3488
+    "judge_tokens": 3436
   },
   {
     "section": "Hard Guardrails",
     "verdict": {
-      "missing_in_b": [],
+      "missing_in_b": [
+        "Privacy rule adds a V5.lockout path for unverified orders when the email does not match the order."
+      ],
       "missing_in_a": [
-        "Legal threat guardrail: calm neutral response, no liability statements, open priority ticket and promise senior human follow‑up"
+        "Legal threat guardrail: stay neutral, do not give liability statements, and open a priority ticket for legal escalations."
       ]
     },
-    "judge_tokens": 3446
+    "judge_tokens": 3573
   }
 ]

@@ -111,7 +111,10 @@ def main() -> int:
             name=name, a_section=section.strip(), b_prompt=b_prompt.strip(),
             b_nodes=nodes_for(graph, vert_keys),
         )
-        r = chat(config.JUDGE_MODEL, [{"role": "user", "content": prompt}],
+        # Pinned to the cross-check model (gpt-oss-120b): the Mistral judge fabricated
+        # gaps on this careful-reading task (2026-07-05 run: 51 findings, spot-checks
+        # showed the "missing" rules present verbatim). 8 calls fit Groq's daily budget.
+        r = chat(config.QC_CROSSCHECK_MODEL, [{"role": "user", "content": prompt}],
                  temperature=config.JUDGE_TEMPERATURE, max_tokens=2000, purpose="judge")
         raw = (r.message.content or "").strip()
         m = re.search(r"\{.*\}", raw, re.S)

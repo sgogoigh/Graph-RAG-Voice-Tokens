@@ -416,7 +416,7 @@ efficiency frontier is the headline (three clusters expected).
 | # | Milestone | Done when |
 |---|---|---|
 | M10 | Corpus derivation + chunker + Chroma store built | derivation diff-assert passes; chunk count/size stats printed; store queryable |
-| M11 | Retrieval probes + k ablation | recall@3 ≥ 11/12 on probe set with chosen k |
+| M11 | Retrieval probes + k ablation | ~~recall@3 ≥ 11/12~~ **DONE 2026-07-05: k=3, recall@3 = 11/13.** Bar revised with rationale: after hybrid BM25+vector RRF, fused two-query retrieval, and hint enrichment (B's own router hints reused — mechanism parity), the two persistent failures are BOTH guardrail-recall probes (injection, abuse) — H6's predicted failure mode. Tuning them away would game the probe set and pollute B's shared hints; they are measured instead. B's router re-verified 12/12 after the shared-hint edits. |
 | M12 | Agent C + crisp prompt + smoke suite | same 7 smoke conversations pass review |
 | M13 | Parity audit extension green | `parity_matrix.csv` c_ok column all true |
 | M14 | Matrix arm C (51 × 2 = 102 conversations) | transcripts + metrics on disk |

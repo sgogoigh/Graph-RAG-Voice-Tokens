@@ -118,6 +118,7 @@ def render_transcript_md(title: str, turns: list[dict]) -> str:
                 f"> turn: {m.latency_ms:.0f} ms | {m.prompt_tokens}p + {m.completion_tokens}c tokens "
                 f"| {len(m.api_calls)} API call(s) | tools: {tool_names}"
                 + (f" | node: {m.extra['node']}" if "node" in m.extra else "")
+                + (f" | retrieved: {', '.join(m.extra['retrieved'])}" if "retrieved" in m.extra else "")
             )
         lines.append("")
     return "\n".join(lines)
